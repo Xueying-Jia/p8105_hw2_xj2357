@@ -26,6 +26,75 @@ glimpse(subway_df)
 The cleaned dataset contains `r nrow(subway_df)` entrance/exit records and `r ncol(subway_df)` variables. The variables describe the subway line, station name and coordinates, routes served, entry permission, vending availability, entrance type, and ADA compliance. 
 I standardized the column names, retained the requested variables, and converted entry from YES/NO to a logical variable. The route information still needs tidying because it is spread across route1 through route11 rather than stored in a single route-name column.
 
+## Station counts and entry access
+
+```{r subway_questions}
+n_stations =
+  subway_df |>
+  distinct(line, station_name) |>
+  nrow()
+
+n_ada_stations =
+  subway_df |>
+  filter(ada == TRUE) |>
+  distinct(line, station_name) |>
+  nrow()
+
+entry_prop_no_vending =
+  subway_df |>
+  filter(vending == "NO") |>
+  pull(entry) |>
+  mean()
+```
+
+Stations are identified by the combination of line and station name.
+There are `r n_stations` distinct stations, of which
+`r n_ada_stations` are ADA compliant.
+
+Among entrances/exits without vending, approximately
+`r round(entry_prop_no_vending * 100, 2)`% allow entry.
+
+## Tidy the route information
+
+```{r tidy_subway_routes}
+subway_long_df =
+  subway_df |>
+  mutate(
+    across(starts_with("route"), as.character)
+  ) |>
+  pivot_longer(
+    cols = starts_with("route"),
+    names_to = "route_number",
+    names_prefix = "route",
+    values_to = "route_name",
+    values_drop_na = TRUE
+  ) |>
+  mutate(
+    route_number = as.integer(route_number)
+  )
+
+n_a_stations =
+  subway_long_df |>
+  filter(route_name == "A") |>
+  distinct(line, station_name) |>
+  nrow()
+
+n_a_ada_stations =
+  subway_long_df |>
+  filter(route_name == "A", ada == TRUE) |>
+  distinct(line, station_name) |>
+  nrow()
+```
+
+I converted the route columns to character variables and reshaped them
+into route_number and route_name. Missing route entries were omitted.
+Each row now represents one route served by an entrance/exit record.
+The resulting dataset contains `r nrow(subway_long_df)` rows and
+`r ncol(subway_long_df)` columns.
+
+There are `r n_a_stations` distinct stations serving the A train,
+of which `r n_a_ada_stations` are ADA compliant.
+
 # Problem 2
 
 # Problem 3
