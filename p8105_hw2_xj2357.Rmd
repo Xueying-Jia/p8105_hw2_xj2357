@@ -1,0 +1,31 @@
+---
+title: "P8105 Homework 2"
+author: "xj2357"
+output: github_document
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+```
+
+# Problem 1
+
+## Import the subway data
+
+```{r import_subway}
+subway_df =
+  read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv",
+  show_col_types = FALSE) |>
+  janitor::clean_names() |>
+  select(line, station_name, station_latitude, station_longitude,
+  starts_with("route"), entry, vending, entrance_type, ada) |>
+  mutate(entry = entry == "YES")
+
+glimpse(subway_df)
+```
+The cleaned dataset contains `r nrow(subway_df)` entrance/exit records and `r ncol(subway_df)` variables. The variables describe the subway line, station name and coordinates, routes served, entry permission, vending availability, entrance type, and ADA compliance. 
+I standardized the column names, retained the requested variables, and converted entry from YES/NO to a logical variable. The route information still needs tidying because it is spread across route1 through route11 rather than stored in a single route-name column.
+
+# Problem 2
+
+# Problem 3
