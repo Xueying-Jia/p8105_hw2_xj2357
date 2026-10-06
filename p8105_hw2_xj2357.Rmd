@@ -96,5 +96,110 @@ There are `r n_a_stations` distinct stations serving the A train,
 of which `r n_a_ada_stations` are ADA compliant.
 
 # Problem 2
+## Import and clean Mr. Trash Wheel data
+
+```{r import_mr_trash}
+mr_trash_df =
+  readxl::read_excel(
+    "data/trash_wheel_202610.xlsx",
+    sheet = "Mr. Trash Wheel",
+    range = readxl::cell_limits(
+      c(2, 1),
+      c(NA, 14)
+    )
+  ) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    year = as.integer(year),
+    date = as.Date(date),
+    sports_balls = as.integer(round(sports_balls)),
+    wheel = "Mr. Trash Wheel"
+  )
+
+glimpse(mr_trash_df)
+```
+## Import Professor Trash Wheel and Gwynnda
+
+```{r import_other_wheels}
+professor_df =
+  readxl::read_excel(
+    "data/trash_wheel_202610.xlsx",
+    sheet = "Professor Trash Wheel",
+    range = readxl::cell_limits(c(2, 1), c(NA, 13)),
+    na = c("", "dive")
+  ) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    year = as.integer(year),
+    date = as.Date(date),
+    wheel = "Professor Trash Wheel"
+  )
+
+gwynnda_df =
+  readxl::read_excel(
+    "data/trash_wheel_202610.xlsx",
+    sheet = "Gwynnda the Good Wheel of the W",
+    range = readxl::cell_limits(c(2, 1), c(NA, 12))
+  ) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    year = as.integer(year),
+    date = as.Date(date),
+    wheel = "Gwynnda"
+  )
+```
+
+The Professor Trash Wheel worksheet contains the nonnumeric text "dive"
+in one plastic-bottle count cell. I treated this value as missing while
+retaining the record and its other available measurements.
+
+## Combine the three datasets
+
+```{r combine_trash_wheels}
+trash_df =
+  bind_rows(mr_trash_df, professor_df, gwynnda_df)
+
+count(trash_df, wheel)
+
+dim(trash_df)
+```
+## Summary of the combined dataset
+
+```{r trash_summary}
+professor_total_weight =
+  trash_df |>
+  filter(wheel == "Professor Trash Wheel") |>
+  pull(weight_tons) |>
+  sum(na.rm = TRUE)
+
+gwynnda_june_2022_butts =
+  trash_df |>
+  filter(
+    wheel == "Gwynnda",
+    year == 2022,
+    month == "June"
+  ) |>
+  pull(cigarette_butts) |>
+  sum(na.rm = TRUE)
+```
+
+The combined dataset contains `r nrow(trash_df)` dumpster collection
+records and `r ncol(trash_df)` variables from three trash wheels.
+Key variables include collection date, trash weight in tons, volume
+in cubic yards, and counts of items such as plastic bottles and
+cigarette butts. The wheel variable identifies the source of each record.
+I selected the relevant Excel ranges, standardized column names and
+data types, removed rows without dumpster numbers, and combined the
+three datasets. Sports-ball counts were rounded and stored as integers.
+Variables absent from a source worksheet are recorded as missing
+after combining.
+
+Across the available records, Professor Trash Wheel collected
+`r round(professor_total_weight, 2)` tons of trash.
+Gwynnda collected `r gwynnda_june_2022_butts` cigarette butts
+in June 2022.
 
 # Problem 3
